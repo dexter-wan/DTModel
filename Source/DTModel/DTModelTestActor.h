@@ -1,11 +1,13 @@
-﻿// Copyright 2023 Dexter.Wan. All Rights Reserved. 
+﻿// Copyright 2023-2024 Dexter.Wan. All Rights Reserved. 
 // EMail: 45141961@qq.com
+// Website: https://dt.cq.cn
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/DynamicMeshComponent.h"
+#include "DTModelComponent/DTModelComponent.h"
 #include "DTModelTestActor.generated.h"
 
 UCLASS(BlueprintType)
@@ -26,7 +28,7 @@ public:
 	UPROPERTY() int															m_FPS;								// 帧率
 	UPROPERTY() FString														m_ShowType;							// 显示类型
 	UPROPERTY() double														m_GenerateTime;						// 生成时间
-	
+
 public:
 	// 构造函数
 	ADTModelTestActor();
@@ -54,4 +56,7 @@ public:
 	// 生成并显示 DynamicMeshComponent
 	UFUNCTION(BlueprintCallable)
 	void GenerateShowDynamicMesh(bool bUseAsyncCooking);
+	// 生成并显示 DTModelComponent
+	UFUNCTION(BlueprintCallable)
+	void GenerateShowDTModel(bool bUseAsyncCooking);
 };

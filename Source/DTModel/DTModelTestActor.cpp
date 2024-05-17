@@ -1,5 +1,6 @@
-﻿// Copyright 2023 Dexter.Wan. All Rights Reserved. 
+﻿// Copyright 2023-2024 Dexter.Wan. All Rights Reserved. 
 // EMail: 45141961@qq.com
+// Website: https://dt.cq.cn
 
 #include "DTModelTestActor.h"
 
@@ -11,6 +12,16 @@
 #include "Components/DynamicMeshComponent.h"
 #include "GeometryScript/MeshNormalsFunctions.h"
 #include "MeshDescriptionBuilder.h"
+#include "DTModelComponent/DTModelComponent.h"
+
+
+#if 0
+	#define GENERATE_SIZE			(600)							// 生成大小
+	#define GENERATE_INTERVAL		(10)							// 生成间隔
+#else
+	#define GENERATE_SIZE			(10)							// 生成大小
+	#define GENERATE_INTERVAL		(100)							// 生成间隔
+#endif
 
 static TArray<FVector>		g_ArrayPoints;						// 点位置数据
 static TArray<FVector>		g_ArrayNormals;						// 点法线数据
@@ -52,8 +63,8 @@ void ADTModelTestActor::BeginPlay()
 		
 		// 生成随机点
 		TArray<FVector2D> ArrayVector2D;
-		constexpr int nSize = 600;
-		constexpr int nInterval = 10;
+		constexpr int nSize = GENERATE_SIZE;
+		constexpr int nInterval = GENERATE_INTERVAL;
 		for ( int x = -nSize; x <= nSize; ++x )
 		{
 			for ( int y = -nSize; y <= nSize; ++y )
@@ -360,6 +371,33 @@ void ADTModelTestActor::GenerateShowDynamicMesh(bool bUseAsyncCooking)
 	m_ElapseTime = 0;
 	m_GenerateTime = ThisTime;
 	UE_LOG(LogTemp, Log, TEXT("Stats::Broadcast GenerateShowDynamicMesh %.2f"), ThisTime);  
+}
+
+// 生成并显示 DTModelComponent
+void ADTModelTestActor::GenerateShowDTModel(bool bUseAsyncCooking)
+{
+	// 释放之前所有组件
+	ReleaseComponent();
+
+	double ThisTime = 0;
+	{
+		SCOPE_SECONDS_COUNTER(ThisTime);
+
+		// 生成并显示
+		m_ShowType = bUseAsyncCooking ? TEXT("DTMC_ASYNC") : TEXT("DTMC");
+		UDTModelComponent* DTModelComponent = NewObject<UDTModelComponent>(this, UDTModelComponent::StaticClass(), TEXT("DTModelComponent"));
+		m_ArrayComponent.Add(DTModelComponent);
+		DTModelComponent->SetupAttachment(RootComponent);
+		DTModelComponent->RegisterComponent();
+		DTModelComponent->SetMaterial(0, m_Material);
+		//ProceduralMeshComponent->bUseAsyncCooking = bUseAsyncCooking;
+		ComponentAddsCollisionChannel(DTModelComponent);
+		DTModelComponent->CreateMeshSection(g_ArrayPoints, g_ArrayTriangles, g_ArrayNormals, g_ArrayUVs);
+	}
+
+	m_ElapseTime = 0;
+	m_GenerateTime = ThisTime;
+	UE_LOG(LogTemp, Log, TEXT("Stats::Broadcast GenerateShowDTModel %.2f"), ThisTime);
 }
 
 
