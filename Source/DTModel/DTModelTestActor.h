@@ -58,5 +58,8 @@ public:
 	void GenerateShowDynamicMesh(bool bUseAsyncCooking);
 	// 生成并显示 DTModelComponent
 	UFUNCTION(BlueprintCallable)
-	void GenerateShowDTModel(bool bUseAsyncCooking);
+	void GenerateShowDTModel();
+	// 生成并显示 RealtimeMeshComponent
+	UFUNCTION(BlueprintCallable)
+	void GenerateShowRealtimeMesh();
 };

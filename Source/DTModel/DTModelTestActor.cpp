@@ -13,9 +13,10 @@
 #include "GeometryScript/MeshNormalsFunctions.h"
 #include "MeshDescriptionBuilder.h"
 #include "DTModelComponent/DTModelComponent.h"
+#include "RealtimeMeshComponent.h"
+#include "RealtimeMeshSimple.h"
 
-
-#if 0
+#if 1
 	#define GENERATE_SIZE			(600)							// 生成大小
 	#define GENERATE_INTERVAL		(10)							// 生成间隔
 #else
@@ -23,6 +24,7 @@
 	#define GENERATE_INTERVAL		(100)							// 生成间隔
 #endif
 
+class URealtimeMeshComponent;
 static TArray<FVector>		g_ArrayPoints;						// 点位置数据
 static TArray<FVector>		g_ArrayNormals;						// 点法线数据
 static TArray<int32>		g_ArrayTriangles;					// 三角面索引
@@ -162,11 +164,11 @@ FVector ADTModelTestActor::CalculateVertexNormal( const TArray<FVector> & ArrayP
 	if (nNumAdjacentVertices > 0)
 	{
 		const FVector Vector(vNormalSum / static_cast<float>(nNumAdjacentVertices));
-		return Vector;
+		return Vector.Equals(FVector::ZeroVector) ? FVector::ZAxisVector : Vector;
 	}
 	else
 	{
-		return FVector::ZeroVector;
+		return FVector::ZAxisVector;
 	}
 }
 
@@ -374,7 +376,7 @@ void ADTModelTestActor::GenerateShowDynamicMesh(bool bUseAsyncCooking)
 }
 
 // 生成并显示 DTModelComponent
-void ADTModelTestActor::GenerateShowDTModel(bool bUseAsyncCooking)
+void ADTModelTestActor::GenerateShowDTModel()
 {
 	// 释放之前所有组件
 	ReleaseComponent();
@@ -384,7 +386,7 @@ void ADTModelTestActor::GenerateShowDTModel(bool bUseAsyncCooking)
 		SCOPE_SECONDS_COUNTER(ThisTime);
 
 		// 生成并显示
-		m_ShowType = bUseAsyncCooking ? TEXT("DTMC_ASYNC") : TEXT("DTMC");
+		m_ShowType = TEXT("DTMC");
 		UDTModelComponent* DTModelComponent = NewObject<UDTModelComponent>(this, UDTModelComponent::StaticClass(), TEXT("DTModelComponent"));
 		m_ArrayComponent.Add(DTModelComponent);
 		DTModelComponent->SetupAttachment(RootComponent);
@@ -398,6 +400,61 @@ void ADTModelTestActor::GenerateShowDTModel(bool bUseAsyncCooking)
 	m_ElapseTime = 0;
 	m_GenerateTime = ThisTime;
 	UE_LOG(LogTemp, Log, TEXT("Stats::Broadcast GenerateShowDTModel %.2f"), ThisTime);
+}
+
+// 生成并显示 RealtimeMeshComponent
+void ADTModelTestActor::GenerateShowRealtimeMesh()
+{
+	// 释放之前所有组件
+	ReleaseComponent();
+
+	double ThisTime = 0;
+	{
+		SCOPE_SECONDS_COUNTER(ThisTime);
+
+		// 生成并显示
+		m_ShowType = TEXT("RMC");
+		URealtimeMeshComponent* RealtimeMeshComponent = NewObject<URealtimeMeshComponent>(this, URealtimeMeshComponent::StaticClass(), TEXT("RealtimeMeshComponent"));
+		m_ArrayComponent.Add(RealtimeMeshComponent);
+		RealtimeMeshComponent->SetupAttachment(RootComponent);
+		RealtimeMeshComponent->RegisterComponent();
+		RealtimeMeshComponent->SetMaterial(0, m_Material);
+		ComponentAddsCollisionChannel(RealtimeMeshComponent);
+
+		URealtimeMeshSimple* RealtimeMesh = RealtimeMeshComponent->InitializeRealtimeMesh<URealtimeMeshSimple>();
+		FRealtimeMeshStreamSet StreamSet;
+		TRealtimeMeshBuilderLocal<uint32, FPackedNormal, FVector2DHalf, 1> Builder(StreamSet);
+		
+		Builder.EnableTangents();
+		Builder.EnableTexCoords();
+		Builder.EnablePolyGroups();
+
+		for ( int nIndex = 0; nIndex < g_ArrayPoints.Num(); ++nIndex )
+		{
+			Builder.AddVertex(FVector3f(g_ArrayPoints[nIndex]))
+					.SetNormal(FVector3f(g_ArrayNormals[nIndex]))
+					.SetTexCoord(FVector2f(g_ArrayUVs[nIndex]));
+		}
+		
+		for ( int nIndex = 0; nIndex < g_ArrayTriangles.Num(); nIndex += 3 )
+		{
+			const int32 ix0 = g_ArrayTriangles[nIndex + 0];
+			const int32 ix1 = g_ArrayTriangles[nIndex + 1];
+			const int32 ix2 = g_ArrayTriangles[nIndex + 2];
+			Builder.AddTriangle(ix0, ix1, ix2, 0);
+		}
+		
+		RealtimeMesh->SetupMaterialSlot(0, "PrimaryMaterial");
+		const FRealtimeMeshSectionGroupKey GroupKey = FRealtimeMeshSectionGroupKey::Create(0, FName("TestTriangle"));
+		const FRealtimeMeshSectionKey PolyGroup0SectionKey = FRealtimeMeshSectionKey::CreateForPolyGroup(GroupKey, 0);
+		RealtimeMesh->CreateSectionGroup(GroupKey, StreamSet);
+		RealtimeMesh->UpdateSectionConfig(PolyGroup0SectionKey, FRealtimeMeshSectionConfig(ERealtimeMeshSectionDrawType::Static, 0));
+				
+	}
+
+	m_ElapseTime = 0;
+	m_GenerateTime = ThisTime;
+	UE_LOG(LogTemp, Log, TEXT("Stats::Broadcast GenerateShowRealtimeMesh %.2f"), ThisTime);
 }
 
 
