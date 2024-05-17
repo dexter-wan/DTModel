@@ -10,7 +10,7 @@
 #include "Components/ActorComponent.h"
 #include "Components/DynamicMeshComponent.h"
 #include "GeometryScript/MeshNormalsFunctions.h"
-#include "MeshConversion/Public/MeshDescriptionBuilder.h"
+#include "MeshDescriptionBuilder.h"
 
 static TArray<FVector>		g_ArrayPoints;						// 点位置数据
 static TArray<FVector>		g_ArrayNormals;						// 点法线数据
