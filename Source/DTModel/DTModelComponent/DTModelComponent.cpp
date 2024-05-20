@@ -97,6 +97,8 @@ void FDTModelSceneProxy::GetDynamicMeshElements(const TArray<const FSceneView*>&
 		BatchElement.MaxVertexIndex = BatchElement.NumPrimitives - 1;
 		
 		Collector.AddMesh(ViewIndex, Mesh);
+
+		*/
 		
 	}
 }
