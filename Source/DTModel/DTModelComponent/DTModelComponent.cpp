@@ -14,7 +14,8 @@ DECLARE_CYCLE_STAT(TEXT("Component Tick"), STAT_Component_Tick, STATGROUP_DTMode
 
 // --------------------------------------------------------------------------
 // 顶点工厂 构造函数
-FDTModelVertexFactory::FDTModelVertexFactory(ERHIFeatureLevel::Type InFeatureLevel) : FVertexFactory(InFeatureLevel) 
+FDTModelVertexFactory::FDTModelVertexFactory(ERHIFeatureLevel::Type InFeatureLevel)
+	: FLocalVertexFactory(InFeatureLevel, "DTModelVertexFactory") 
 {
 }
 
@@ -75,26 +76,28 @@ void FDTModelSceneProxy::GetDynamicMeshElements(const TArray<const FSceneView*>&
 
 
 		
-		// FMeshBatch& Mesh = Collector.AllocateMesh();
-		//
-		// //Mesh.VertexFactory = &RenderData->LODVertexFactories[0].VertexFactory;
-		// Mesh.MaterialRenderProxy = nullptr; // Material->GetRenderProxy();
-		// Mesh.ReverseCulling = IsLocalToWorldDeterminantNegative();
-		// Mesh.Type = PT_PointList;
-		// Mesh.DepthPriorityGroup = SDPG_World;
-		// Mesh.LODIndex = 0;
-		// Mesh.bCanApplyViewModeOverrides = false;
-		// Mesh.bUseAsOccluder = false;
-		// Mesh.bWireframe = false;
-		//
-		// FMeshBatchElement& BatchElement = Mesh.Elements[0];
-		// //BatchElement.IndexBuffer = &RenderData->LODResources[0].IndexBuffer;
-		// //BatchElement.NumPrimitives = NumPoints;
-		// BatchElement.FirstIndex = 0;
-		// BatchElement.MinVertexIndex = 0;
-		// BatchElement.MaxVertexIndex = BatchElement.NumPrimitives - 1;
-		//
-		// Collector.AddMesh(ViewIndex, Mesh);
+		/*
+		FMeshBatch& Mesh = Collector.AllocateMesh();
+		
+		Mesh.VertexFactory = &m_DTModelVertexFactory;
+		Mesh.MaterialRenderProxy = nullptr; // Material->GetRenderProxy();
+		Mesh.ReverseCulling = IsLocalToWorldDeterminantNegative();
+		Mesh.Type = PT_PointList;
+		Mesh.DepthPriorityGroup = SDPG_World;
+		Mesh.LODIndex = 0;
+		Mesh.bCanApplyViewModeOverrides = false;
+		Mesh.bUseAsOccluder = false;
+		Mesh.bWireframe = false;
+		
+		FMeshBatchElement& BatchElement = Mesh.Elements[0];
+		//BatchElement.IndexBuffer = &RenderData->LODResources[0].IndexBuffer;
+		//BatchElement.NumPrimitives = NumPoints;
+		BatchElement.FirstIndex = 0;
+		BatchElement.MinVertexIndex = 0;
+		BatchElement.MaxVertexIndex = BatchElement.NumPrimitives - 1;
+		
+		Collector.AddMesh(ViewIndex, Mesh);
+		
 	}
 }
 

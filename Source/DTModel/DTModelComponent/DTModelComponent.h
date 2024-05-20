@@ -12,7 +12,7 @@ class UDTModelComponent;
 
 
 // 顶点工厂
-class FDTModelVertexFactory : public FVertexFactory
+class FDTModelVertexFactory : public FLocalVertexFactory
 {
 public:
 	FDTModelVertexFactory(ERHIFeatureLevel::Type InFeatureLevel);
