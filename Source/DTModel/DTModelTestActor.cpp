@@ -20,7 +20,7 @@
 	#define GENERATE_SIZE			(600)							// 生成大小
 	#define GENERATE_INTERVAL		(10)							// 生成间隔
 #else
-	#define GENERATE_SIZE			(10)							// 生成大小
+	#define GENERATE_SIZE			(100)							// 生成大小
 	#define GENERATE_INTERVAL		(100)							// 生成间隔
 #endif
 
