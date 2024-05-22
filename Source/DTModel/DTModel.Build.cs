@@ -27,7 +27,8 @@ public class DTModel : ModuleRules
 			"GeometryScriptingCore",
 			"RHI",
 			"RenderCore",
-			"RealtimeMeshComponent"
+			"RealtimeMeshComponent",
+			"PhysicsCore"
 		});
 	}
 }

@@ -12,15 +12,15 @@
 #include "Components/DynamicMeshComponent.h"
 #include "GeometryScript/MeshNormalsFunctions.h"
 #include "MeshDescriptionBuilder.h"
-#include "DTModelComponent/DTModelComponent.h"
+#include "DTMeshComponent/DTMeshComponent.h"
 #include "RealtimeMeshComponent.h"
 #include "RealtimeMeshSimple.h"
 
-#if 1
+#if 0
 	#define GENERATE_SIZE			(600)							// 生成大小
 	#define GENERATE_INTERVAL		(10)							// 生成间隔
 #else
-	#define GENERATE_SIZE			(100)							// 生成大小
+	#define GENERATE_SIZE			(60)							// 生成大小
 	#define GENERATE_INTERVAL		(100)							// 生成间隔
 #endif
 
@@ -300,6 +300,7 @@ void ADTModelTestActor::GenerateShowProceduralMesh(bool bUseAsyncCooking)
 		ProceduralMeshComponent->RegisterComponent();
 		ProceduralMeshComponent->SetMaterial(0, m_Material);
 		ProceduralMeshComponent->bUseAsyncCooking = bUseAsyncCooking;
+		ProceduralMeshComponent->SetCastShadow(false);
 		ComponentAddsCollisionChannel(ProceduralMeshComponent);
 		ProceduralMeshComponent->CreateMeshSection(0, g_ArrayPoints, g_ArrayTriangles, g_ArrayNormals, g_ArrayUVs, {}, {}, true);
 	}
@@ -375,7 +376,7 @@ void ADTModelTestActor::GenerateShowDynamicMesh(bool bUseAsyncCooking)
 	UE_LOG(LogTemp, Log, TEXT("Stats::Broadcast GenerateShowDynamicMesh %.2f"), ThisTime);  
 }
 
-// 生成并显示 DTModelComponent
+// 生成并显示 DTMeshComponent
 void ADTModelTestActor::GenerateShowDTModel()
 {
 	// 释放之前所有组件
@@ -387,14 +388,15 @@ void ADTModelTestActor::GenerateShowDTModel()
 
 		// 生成并显示
 		m_ShowType = TEXT("DTMC");
-		UDTModelComponent* DTModelComponent = NewObject<UDTModelComponent>(this, UDTModelComponent::StaticClass(), TEXT("DTModelComponent"));
-		m_ArrayComponent.Add(DTModelComponent);
-		DTModelComponent->SetupAttachment(RootComponent);
-		DTModelComponent->RegisterComponent();
-		DTModelComponent->SetMaterial(0, m_Material);
-		//ProceduralMeshComponent->bUseAsyncCooking = bUseAsyncCooking;
-		ComponentAddsCollisionChannel(DTModelComponent);
-		DTModelComponent->CreateMeshSection(g_ArrayPoints, g_ArrayTriangles, g_ArrayNormals, g_ArrayUVs);
+		UDTMeshComponent* DTMeshComponent = NewObject<UDTMeshComponent>(this, UDTMeshComponent::StaticClass(), TEXT("DTMeshComponent"));
+		m_ArrayComponent.Add(DTMeshComponent);
+		DTMeshComponent->SetupAttachment(RootComponent);
+		DTMeshComponent->RegisterComponent();
+		DTMeshComponent->SetMaterial(0, m_Material);
+		//DTMeshComponent->bUseAsyncCooking = bUseAsyncCooking;
+		ComponentAddsCollisionChannel(DTMeshComponent);
+		DTMeshComponent->CreateMesh(g_ArrayPoints, g_ArrayTriangles, g_ArrayNormals, g_ArrayUVs);
+
 	}
 
 	m_ElapseTime = 0;

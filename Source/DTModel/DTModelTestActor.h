@@ -7,7 +7,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/DynamicMeshComponent.h"
-#include "DTModelComponent/DTModelComponent.h"
+#include "DTMeshComponent/DTMeshComponent.h"
 #include "DTModelTestActor.generated.h"
 
 UCLASS(BlueprintType)
@@ -56,7 +56,7 @@ public:
 	// 生成并显示 DynamicMeshComponent
 	UFUNCTION(BlueprintCallable)
 	void GenerateShowDynamicMesh(bool bUseAsyncCooking);
-	// 生成并显示 DTModelComponent
+	// 生成并显示 DTMeshComponent
 	UFUNCTION(BlueprintCallable)
 	void GenerateShowDTModel();
 	// 生成并显示 RealtimeMeshComponent
