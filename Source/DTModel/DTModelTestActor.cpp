@@ -16,7 +16,7 @@
 #include "RealtimeMeshComponent.h"
 #include "RealtimeMeshSimple.h"
 
-#if 0
+#if 1
 	#define GENERATE_SIZE			(600)							// 生成大小
 	#define GENERATE_INTERVAL		(10)							// 生成间隔
 #else
@@ -395,7 +395,7 @@ void ADTModelTestActor::GenerateShowDTModel()
 		DTMeshComponent->SetMaterial(0, m_Material);
 		//DTMeshComponent->bUseAsyncCooking = bUseAsyncCooking;
 		ComponentAddsCollisionChannel(DTMeshComponent);
-		DTMeshComponent->CreateMesh(g_ArrayPoints, g_ArrayTriangles, g_ArrayNormals, g_ArrayUVs);
+		DTMeshComponent->AddMesh(g_ArrayPoints, g_ArrayTriangles, g_ArrayNormals, g_ArrayUVs);
 
 	}
 

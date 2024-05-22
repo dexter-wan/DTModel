@@ -291,7 +291,7 @@ bool UDTMeshComponent::ContainsPhysicsTriMeshData(bool InUseAllTriData) const
 }
 
 // 创建模型点
-void UDTMeshComponent::CreateMesh(const TArray<FVector>& Vertices, const TArray<int32>& Triangles, const TArray<FVector>& Normals, const TArray<FVector2D>& UVs)
+int UDTMeshComponent::AddMesh(const TArray<FVector>& Vertices, const TArray<int32>& Triangles, const TArray<FVector>& Normals, const TArray<FVector2D>& UVs)
 {
 	// 创建模型
 	FDTMeshSectionCUP & MeshSection = m_MeshSections.AddDefaulted_GetRef();
@@ -327,31 +327,8 @@ void UDTMeshComponent::CreateMesh(const TArray<FVector>& Vertices, const TArray<
 
 	// 重新绘画
 	MarkRenderStateDirty();
-}
 
-// // 创建模型
-// void UDTMeshComponent::CreateMeshSection(const TArray<FVector>& Vertices, const TArray<int32>& Triangles, const TArray<FVector>& Normals, const TArray<FVector2D>& UVs)
-// {
-// 	
-// 	UE_LOG(LogTemp, Display, TEXT("CreateMeshSection 线程ID : %d"), FPlatformTLS::GetCurrentThreadId());
-// 	m_ArrayPoints = Vertices;
-// 	m_ArrayNormals = Normals;
-// 	m_ArrayUVs = UVs;
-// 	m_ArrayTriangles = Triangles;
-// 	m_LocalBounds = FBoxSphereBounds(Vertices.GetData(), Vertices.Num());
-//
-//
-// 	if ( UBodySetup* BodySetup = GetBodySetup() )
-// 	{
-// 		BodySetup->BodySetupGuid = FGuid::NewGuid();
-// 		BodySetup->bHasCookedCollisionData = true;
-// 		BodySetup->InvalidatePhysicsData();
-// 		BodySetup->CreatePhysicsMeshes();
-// 		RecreatePhysicsState();
-// 	}
-//
-// 	
-// 	MarkRenderStateDirty();
-// }
+	return m_MeshSections.Num() - 1;
+}
 
 UE_ENABLE_OPTIMIZATION_SHIP
