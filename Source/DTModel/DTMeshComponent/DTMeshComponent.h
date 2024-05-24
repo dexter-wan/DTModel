@@ -8,6 +8,8 @@
 #include "DynamicMeshBuilder.h"
 #include "MaterialDomain.h"
 #include "Components/MeshComponent.h"
+#include "PhysicsEngine/ConvexElem.h"
+#include "PhysicsProxy/StaticMeshPhysicsProxy.h"
 #include "DTMeshComponent.generated.h"
 
 class UDTMeshComponent;
@@ -30,9 +32,10 @@ struct FDTMeshSectionGPU
 class FDTMeshSceneProxy final : public FPrimitiveSceneProxy
 {
 
-private:
+public:
 	TArray<FDTMeshSectionGPU*>						m_MeshSections;					// 模型分块缓冲
 	FMaterialRelevance								m_MaterialRelevance;			// 材质属性
+	UBodySetup*										m_BodySetup;					// 碰撞体
 	
 public:
 	// 构造函数
@@ -59,7 +62,7 @@ protected:
 };
 
 // CPU保存的模型数据
-struct FDTMeshSectionCUP
+struct FDTMeshSectionCPU
 {
 	TArray<FDynamicMeshVertex>						Vertices;				// 点位置数据
 	TArray<FUintVector>								Triangles;				// 三角形索引
@@ -75,7 +78,7 @@ class DTMODEL_API UDTMeshComponent : public UMeshComponent, public IInterface_Co
 	
 private:
 	// 模型数据
-	TArray<FDTMeshSectionCUP>						m_MeshSections;
+	TArray<FDTMeshSectionCPU>						m_MeshSections;
 
 	// 场景代理
 	FDTMeshSceneProxy *								m_MeshSceneProxy;
@@ -87,7 +90,7 @@ private:
 	// 碰撞体
 	UPROPERTY(Instanced)
 	TObjectPtr<class UBodySetup>					m_BodySetup;
-	
+
 public:
 	// 构造函数
 	UDTMeshComponent(const FObjectInitializer& ObjectInitializer);
@@ -121,12 +124,26 @@ public:
 	// 数据函数
 public:
 	// 获取数据
-	TArray<FDTMeshSectionCUP> & GetMeshSections() { return m_MeshSections; }
+	TArray<FDTMeshSectionCPU> & GetMeshSections() { return m_MeshSections; }
 	// 获取场景代理
 	FDTMeshSceneProxy * GetSceneProxy() const { return m_MeshSceneProxy; }
+
+	// 功能函数
+public:
+	// 更新碰撞体
+	void UpdateBodySetup();
 	
 public:
 	// 创建模型
-	int AddMesh(const TArray<FVector>& Vertices, const TArray<int32>& Triangles, const TArray<FVector>& Normals, const TArray<FVector2D>& UVs);
+	int AddMeshSection(const TArray<FVector>& Vertices, const TArray<int32>& Triangles, const TArray<FVector>& Normals, const TArray<FVector2D>& UVs);
+	// 更新点
+	bool UpdateVertexPosition( uint32 SectionIndex, uint32 VertexIndex, const FVector & UpdatePosition );
+	// 偏移点
+	bool OffsetVertexPosition( uint32 SectionIndex, uint32 VertexIndex, const FVector & OffsetPosition );
 
+	UFUNCTION(BlueprintCallable)
+	void BeforeHitTest();
+	
+	UFUNCTION(BlueprintCallable)
+	void AfterHitTest( const FHitResult& Hit ); 
 };

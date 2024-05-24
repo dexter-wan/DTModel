@@ -62,4 +62,11 @@ public:
 	// 生成并显示 RealtimeMeshComponent
 	UFUNCTION(BlueprintCallable)
 	void GenerateShowRealtimeMesh();
+
+	UFUNCTION(BlueprintCallable)
+	void BeforeHitTest();
+	
+	UFUNCTION(BlueprintCallable)
+	void AfterHitTest( const FHitResult& Hit );
+	
 };

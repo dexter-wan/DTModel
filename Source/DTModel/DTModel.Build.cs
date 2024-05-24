@@ -28,7 +28,8 @@ public class DTModel : ModuleRules
 			"RHI",
 			"RenderCore",
 			"RealtimeMeshComponent",
-			"PhysicsCore"
+			"PhysicsCore",
+			"Chaos"
 		});
 	}
 }

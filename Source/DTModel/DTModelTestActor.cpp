@@ -19,9 +19,11 @@
 #if 1
 	#define GENERATE_SIZE			(600)							// 生成大小
 	#define GENERATE_INTERVAL		(10)							// 生成间隔
+	#define GENERATE_HEIGHT			(200)							// 生成高度
 #else
-	#define GENERATE_SIZE			(60)							// 生成大小
-	#define GENERATE_INTERVAL		(100)							// 生成间隔
+	#define GENERATE_SIZE			(1)								// 生成大小
+	#define GENERATE_INTERVAL		(10000)							// 生成间隔
+	#define GENERATE_HEIGHT			(1)								// 生成高度
 #endif
 
 class URealtimeMeshComponent;
@@ -86,7 +88,7 @@ void ADTModelTestActor::BeginPlay()
 		// 生成模型数据
 		for ( const FVector2D & Vector2D : ArrayVector2D )
 		{
-			g_ArrayPoints.Add(FVector(Vector2D.X, Vector2D.Y, FMath::RandHelper(200)));
+			g_ArrayPoints.Add(FVector(Vector2D.X, Vector2D.Y, FMath::RandHelper(GENERATE_HEIGHT)));
 			g_ArrayUVs.Add( FVector2D((Vector2D.X - (-nSize * nInterval)) / (nSize * nInterval * 2), (Vector2D.Y - (-nSize * nInterval)) / (nSize * nInterval * 2)) );
 		}
 		for ( const UE::Geometry::FIndex3i & Index3i : ArrayIndex )
@@ -111,6 +113,17 @@ void ADTModelTestActor::BeginPlay()
 void ADTModelTestActor::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	// static double Delta = 0.0f;
+	// Delta += DeltaSeconds;
+	// for ( USceneComponent * SceneComponent : m_ArrayComponent )
+	// {
+	// 	if ( UDTMeshComponent * DTMeshComponent = Cast<UDTMeshComponent>(SceneComponent) )
+	// 	{
+	// 		DTMeshComponent->OffsetVertexPosition(0, 1, FVector(0, 0, FMath::Sin(Delta) * 10.0));
+	// 		DTMeshComponent->OffsetVertexPosition(0, 7, FVector(0, 0, FMath::Sin(Delta) * 10.0));
+	// 	}
+	// }
 	
 	// 间隔一点时间执行一次 信息更新
 	m_ElapseTime += DeltaSeconds;
@@ -300,7 +313,7 @@ void ADTModelTestActor::GenerateShowProceduralMesh(bool bUseAsyncCooking)
 		ProceduralMeshComponent->RegisterComponent();
 		ProceduralMeshComponent->SetMaterial(0, m_Material);
 		ProceduralMeshComponent->bUseAsyncCooking = bUseAsyncCooking;
-		ProceduralMeshComponent->SetCastShadow(false);
+		// ProceduralMeshComponent->SetCastShadow(false);
 		ComponentAddsCollisionChannel(ProceduralMeshComponent);
 		ProceduralMeshComponent->CreateMeshSection(0, g_ArrayPoints, g_ArrayTriangles, g_ArrayNormals, g_ArrayUVs, {}, {}, true);
 	}
@@ -395,7 +408,7 @@ void ADTModelTestActor::GenerateShowDTModel()
 		DTMeshComponent->SetMaterial(0, m_Material);
 		//DTMeshComponent->bUseAsyncCooking = bUseAsyncCooking;
 		ComponentAddsCollisionChannel(DTMeshComponent);
-		DTMeshComponent->AddMesh(g_ArrayPoints, g_ArrayTriangles, g_ArrayNormals, g_ArrayUVs);
+		DTMeshComponent->AddMeshSection(g_ArrayPoints, g_ArrayTriangles, g_ArrayNormals, g_ArrayUVs);
 
 	}
 
@@ -451,12 +464,33 @@ void ADTModelTestActor::GenerateShowRealtimeMesh()
 		const FRealtimeMeshSectionKey PolyGroup0SectionKey = FRealtimeMeshSectionKey::CreateForPolyGroup(GroupKey, 0);
 		RealtimeMesh->CreateSectionGroup(GroupKey, StreamSet);
 		RealtimeMesh->UpdateSectionConfig(PolyGroup0SectionKey, FRealtimeMeshSectionConfig(ERealtimeMeshSectionDrawType::Static, 0));
-				
 	}
 
 	m_ElapseTime = 0;
 	m_GenerateTime = ThisTime;
 	UE_LOG(LogTemp, Log, TEXT("Stats::Broadcast GenerateShowRealtimeMesh %.2f"), ThisTime);
+}
+
+void ADTModelTestActor::BeforeHitTest()
+{
+	for ( USceneComponent * SceneComponent : m_ArrayComponent )
+	{
+		if ( UDTMeshComponent * DTMeshComponent = Cast<UDTMeshComponent>(SceneComponent) )
+		{
+			DTMeshComponent->BeforeHitTest();
+		}
+	}
+}
+
+void ADTModelTestActor::AfterHitTest(const FHitResult& Hit)
+{
+	for ( USceneComponent * SceneComponent : m_ArrayComponent )
+	{
+		if ( UDTMeshComponent * DTMeshComponent = Cast<UDTMeshComponent>(SceneComponent) )
+		{
+			DTMeshComponent->AfterHitTest(Hit);
+		}
+	}
 }
 
 
