@@ -352,7 +352,6 @@ int UDTMeshComponent::AddMeshSection(const TArray<FVector>& Vertices, const TArr
 		FVector3f TangentZ(HaveNormal ? FVector3f(Normals[Index]) : FVector3f::ZeroVector);
 		FVector2f TexCoord(HaveUV ? FVector2f(UVs[Index]) : FVector2f::ZeroVector);
 		MeshSectionCPU.Vertices.Add( FDynamicMeshVertex( Position, TangentX, TangentZ, TexCoord, FColor::White ) );
-		
 	}
 
 	for ( int32 Index = 0; Index < Triangles.Num(); Index += 3 )

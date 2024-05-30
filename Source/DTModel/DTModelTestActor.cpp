@@ -15,6 +15,7 @@
 #include "DTMeshComponent/DTMeshComponent.h"
 #include "RealtimeMeshComponent.h"
 #include "RealtimeMeshSimple.h"
+#include "DTMeshComponent/DTStaticMeshComponent.h"
 
 #if 1
 	#define GENERATE_SIZE			(600)							// 生成大小
@@ -31,6 +32,15 @@ static TArray<FVector>		g_ArrayPoints;						// 点位置数据
 static TArray<FVector>		g_ArrayNormals;						// 点法线数据
 static TArray<int32>		g_ArrayTriangles;					// 三角面索引
 static TArray<FVector2D>	g_ArrayUVs;							// UV
+
+#define LOAD_FILE(T, F, V)															\
+if ( FPaths::FileExists(F) )														\
+{																					\
+	V.Empty();																		\
+	TArray<uint8> Result;															\
+	FFileHelper::LoadFileToArray(Result, *F);										\
+	V.Append( (T*)Result.GetData(), Result.Num() / sizeof(T) );						\
+}
 
 // 构造函数
 ADTModelTestActor::ADTModelTestActor()
@@ -56,9 +66,29 @@ void ADTModelTestActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 读取临时文件
+	FString FilePoints = FPaths::Combine(FPlatformProcess::UserTempDir(), FString::Printf(TEXT("E8D1FE5B601FA4B358B95BCEBBAB353A-%d-%d-%d.Points"), GENERATE_SIZE, GENERATE_INTERVAL, GENERATE_HEIGHT));
+	FString FileNormals = FPaths::Combine(FPlatformProcess::UserTempDir(), FString::Printf(TEXT("E9BFF36BC5A4326FE333BAB60BB0FD31-%d-%d-%d.Normals"), GENERATE_SIZE, GENERATE_INTERVAL, GENERATE_HEIGHT));
+	FString FileUVs = FPaths::Combine(FPlatformProcess::UserTempDir(), FString::Printf(TEXT("3664A2DB7A736C0943B3F3C0412CA546-%d-%d-%d.UVs"), GENERATE_SIZE, GENERATE_INTERVAL, GENERATE_HEIGHT));
+	FString FileTriangles = FPaths::Combine(FPlatformProcess::UserTempDir(), FString::Printf(TEXT("8B973A92E9A0E9EC7BC409CB3279F25F-%d-%d-%d.Triangles"), GENERATE_SIZE, GENERATE_INTERVAL, GENERATE_HEIGHT));
+
 	// 生成一次全局点
 	if ( g_ArrayPoints.Num() == 0 )
 	{
+		// 重新读取数据
+		LOAD_FILE(FVector, FilePoints, g_ArrayPoints);
+		LOAD_FILE(FVector, FileNormals, g_ArrayNormals);
+		LOAD_FILE(FVector2D, FileUVs, g_ArrayUVs);
+		LOAD_FILE(int32, FileTriangles, g_ArrayTriangles);
+
+		// 读取成功
+		if ( g_ArrayPoints.Num() && g_ArrayNormals.Num() && g_ArrayUVs.Num() && g_ArrayTriangles.Num()
+			&& g_ArrayPoints.Num() == g_ArrayNormals.Num() && g_ArrayPoints.Num() == g_ArrayUVs.Num()
+			&& g_ArrayTriangles.Num() % 3 == 0 )
+		{
+			return;
+		}
+
 		// 清空无效数据
 		g_ArrayPoints.Empty();
 		g_ArrayNormals.Empty();
@@ -106,6 +136,12 @@ void ADTModelTestActor::BeginPlay()
 		{
 			g_ArrayNormals.Add( CalculateVertexNormal(g_ArrayPoints, g_ArrayTriangles, MapIndex, nPointIndex) );
 		}
+		
+		// 保存文件
+		FFileHelper::SaveArrayToFile(TArray64<uint8>((uint8*)g_ArrayPoints.GetData(), g_ArrayPoints.Num() * g_ArrayPoints.GetTypeSize()), *FilePoints);
+		FFileHelper::SaveArrayToFile(TArray64<uint8>((uint8*)g_ArrayNormals.GetData(), g_ArrayNormals.Num() * g_ArrayNormals.GetTypeSize()), *FileNormals);
+		FFileHelper::SaveArrayToFile(TArray64<uint8>((uint8*)g_ArrayUVs.GetData(), g_ArrayUVs.Num() * g_ArrayUVs.GetTypeSize()), *FileUVs);
+		FFileHelper::SaveArrayToFile(TArray64<uint8>((uint8*)g_ArrayTriangles.GetData(), g_ArrayTriangles.Num() * g_ArrayTriangles.GetTypeSize()), *FileTriangles);
 	}
 }
 
@@ -213,6 +249,7 @@ void ADTModelTestActor::GenerateShowStaticMesh()
 		// 生成并显示
 		m_ShowType = TEXT("SMC");
 		UStaticMeshComponent * StaticMeshComponent = NewObject<UStaticMeshComponent>(this, UStaticMeshComponent::StaticClass(), TEXT("StaticMeshComponent"));
+		//UDTStaticMeshComponent * StaticMeshComponent = NewObject<UDTStaticMeshComponent>(this, UDTStaticMeshComponent::StaticClass(), TEXT("StaticMeshComponent"));
 		m_ArrayComponent.Add(StaticMeshComponent);
 		StaticMeshComponent->SetupAttachment(RootComponent);
 		StaticMeshComponent->RegisterComponent();

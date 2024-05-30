@@ -18,6 +18,7 @@ public class DTModel : ModuleRules
 		});
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
+			"Engine", 
 			"GeometryCore",
 			"ProceduralMeshComponent", 
 			"MeshConversion",
