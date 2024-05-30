@@ -90,9 +90,15 @@ bool FDTMeshSceneProxy::CanBeOccluded() const
 }
 
 // 创建绘画线程资源
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+void FDTMeshSceneProxy::CreateRenderThreadResources(FRHICommandListBase& RHICmdList)
+#else
 void FDTMeshSceneProxy::CreateRenderThreadResources()
+#endif
 {
+#if ENGINE_MAJOR_VERSION <= 5 && ENGINE_MINOR_VERSION <= 3
 	FRHICommandListBase& RHICmdList = FRHICommandListImmediate::Get();
+#endif
 	for (FDTMeshSectionGPU *& MeshSection : m_MeshSections)
 	{
 		MeshSection->VertexBuffers.StaticMeshVertexBuffer.InitResource(RHICmdList);

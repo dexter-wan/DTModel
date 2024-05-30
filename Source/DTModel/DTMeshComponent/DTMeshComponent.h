@@ -54,7 +54,11 @@ protected:
 	// 是否可以被其他基元剔除
 	virtual bool CanBeOccluded() const override;
 	// 创建绘画线程资源
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+	virtual void CreateRenderThreadResources(FRHICommandListBase& RHICmdList) override;
+#else
 	virtual void CreateRenderThreadResources() override;
+#endif
 	// 绘画动态元素
 	virtual void GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const override;
 	// 命中代理
