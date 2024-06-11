@@ -6,7 +6,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Components/DynamicMeshComponent.h"
 #include "DTMeshComponent/DTMeshComponent.h"
 #include "DTModelTestActor.generated.h"
 
@@ -38,10 +37,6 @@ protected:
 	virtual void BeginPlay() override;
 	// 每帧函数
 	virtual void Tick(float DeltaSeconds) override;
-	// 计算点法线
-	static FVector CalculateVertexNormal( const TArray<FVector> & ArrayPoints, const TArray<int32> & ArrayTriangles, const TMap<int, TArray<UE::Geometry::FIndex3i>> & MapIndex, int nPointIndex );
-	// 组件添加碰撞通道
-	static void ComponentAddsCollisionChannel( UPrimitiveComponent * Component );
 
 public:
 	// 释放组件
@@ -62,6 +57,9 @@ public:
 	// 生成并显示 RealtimeMeshComponent
 	UFUNCTION(BlueprintCallable)
 	void GenerateShowRealtimeMesh();
+	// 生成并显示 DTTerrainComponent
+	UFUNCTION(BlueprintCallable)
+	void GenerateShowTerrainComponent();
 
 	UFUNCTION(BlueprintCallable)
 	void BeforeHitTest();

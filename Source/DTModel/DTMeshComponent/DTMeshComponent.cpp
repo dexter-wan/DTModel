@@ -23,7 +23,6 @@ DECLARE_CYCLE_STAT(TEXT("Component Tick"), STAT_Component_Tick, STATGROUP_DTMode
 FDTMeshSceneProxy::FDTMeshSceneProxy(UDTMeshComponent* DTMeshComponent)
 	: FPrimitiveSceneProxy(DTMeshComponent)
 	, m_MaterialRelevance(DTMeshComponent->GetMaterialRelevance(GetScene().GetFeatureLevel()))
-	, m_BodySetup(DTMeshComponent->GetBodySetup())
 {
 	TArray<FDTMeshSectionCPU> & MeshSectionsCPU = DTMeshComponent->GetMeshSections();
 	for ( int Index = 0; Index < MeshSectionsCPU.Num(); ++Index )
@@ -162,31 +161,6 @@ void FDTMeshSceneProxy::GetDynamicMeshElements(const TArray<const FSceneView*>& 
 
 				Collector.AddMesh(ViewIndex, Mesh);
 			}
-		}
-	}
-	
-	for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
-	{
-		if (VisibilityMap & (1 << ViewIndex))
-		{	 
-			// // Draw simple collision as wireframe if 'show collision', and collision is enabled, and we are not using the complex as the simple
-			// if (ViewFamily.EngineShowFlags.Collision && IsCollisionEnabled() && m_BodySetup->GetCollisionTraceFlag() != ECollisionTraceFlag::CTF_UseComplexAsSimple)
-			// {
-			// 	FTransform GeomTransform(GetLocalToWorld());
-			// 	m_BodySetup->AggGeom.GetAggGeom(GeomTransform, GetSelectionColor(FColor(157, 149, 223, 255), IsSelected(), IsHovered()).ToFColor(true), NULL, false, false, AlwaysHasVelocity(), ViewIndex, Collector);
-			// }
-			//
-			// // Render bounds
-			// RenderBounds(Collector.GetPDI(ViewIndex), ViewFamily.EngineShowFlags, GetBounds(), IsSelected());
-
-
-			// for ( FKConvexElem & ConvexElem : m_BodySetup->AggGeom.ConvexElems )
-			// {
-			// 	FPrimitiveDrawInterface* PDI = Collector.GetPDI(ViewIndex);
-			// 	PDI->DrawLine(ConvexElem.VertexData[0], ConvexElem.VertexData[1], FLinearColor::Red, SDPG_World);
-			// 	PDI->DrawLine(ConvexElem.VertexData[1], ConvexElem.VertexData[2], FLinearColor::Red, SDPG_World);
-			// 	PDI->DrawLine(ConvexElem.VertexData[2], ConvexElem.VertexData[0], FLinearColor::Red, SDPG_World);
-			// }
 		}
 	}
 }

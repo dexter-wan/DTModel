@@ -4,6 +4,7 @@
 
 #include "DTModelTestActor.h"
 
+#include "DTTools.h"
 #include "ProceduralMeshComponent.h"
 #include "CompGeom/Delaunay2.h"
 #include "PhysicsEngine/BodySetup.h"
@@ -16,6 +17,7 @@
 #include "RealtimeMeshComponent.h"
 #include "RealtimeMeshSimple.h"
 #include "DTMeshComponent/DTStaticMeshComponent.h"
+#include "DTTerrainComponent/DTTerrainComponent.h"
 
 #if 1
 	#define GENERATE_SIZE			(600)							// 生成大小
@@ -134,7 +136,7 @@ void ADTModelTestActor::BeginPlay()
 		// 计算点法线
 		for (int nPointIndex = 0; nPointIndex < g_ArrayPoints.Num(); nPointIndex++)
 		{
-			g_ArrayNormals.Add( CalculateVertexNormal(g_ArrayPoints, g_ArrayTriangles, MapIndex, nPointIndex) );
+			g_ArrayNormals.Add( UDTTools::CalculateVertexNormal(g_ArrayPoints, g_ArrayTriangles, MapIndex, nPointIndex) );
 		}
 		
 		// 保存文件
@@ -187,55 +189,6 @@ void ADTModelTestActor::ReleaseComponent()
 	m_ArrayComponent.Empty();
 }
 
-// 计算点法线
-FVector ADTModelTestActor::CalculateVertexNormal( const TArray<FVector> & ArrayPoints, const TArray<int32> & ArrayTriangles, const TMap<int, TArray<UE::Geometry::FIndex3i>> & MapIndex, int nPointIndex )
-{
-	FVector vNormalSum = FVector::ZeroVector;
-	int nNumAdjacentVertices = 0;
-	if ( const TArray<UE::Geometry::FIndex3i>* pArrayIndex3i = MapIndex.Find(nPointIndex) )
-	{
-		for ( const UE::Geometry::FIndex3i & Index3i : *pArrayIndex3i )
-		{
-			const int nOne = Index3i.C;
-			const int nTwo = Index3i.B;
-			const int nThree = Index3i.A;
-			FVector vPoint0 = ArrayPoints[nOne];
-			FVector vPoint1 = ArrayPoints[nTwo];
-			FVector vPoint2 = ArrayPoints[nThree];
-			FVector vEdge1 = vPoint1 - vPoint0;
-			FVector vEdge2 = vPoint2 - vPoint0;
-			FVector vNormal = vEdge2 ^ vEdge1;
-			vNormal.Normalize();
-			vNormalSum += vNormal;
-			nNumAdjacentVertices++;
-		}
-	}
-	if (nNumAdjacentVertices > 0)
-	{
-		const FVector Vector(vNormalSum / static_cast<float>(nNumAdjacentVertices));
-		return Vector.Equals(FVector::ZeroVector) ? FVector::ZAxisVector : Vector;
-	}
-	else
-	{
-		return FVector::ZAxisVector;
-	}
-}
-
-// 组件添加碰撞通道
-void ADTModelTestActor::ComponentAddsCollisionChannel(UPrimitiveComponent* Component)
-{
-	Component->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	Component->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-	Component->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
-	Component->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
-	Component->SetCollisionResponseToChannel(ECC_Camera, ECR_Block);
-	Component->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Block);
-	Component->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-	Component->SetCollisionResponseToChannel(ECC_Vehicle, ECR_Block);
-	Component->SetCollisionResponseToChannel(ECC_Destructible, ECR_Block);
-}
-
-
 // 生成并显示 StaticMeshComponent
 void ADTModelTestActor::GenerateShowStaticMesh()
 {
@@ -253,7 +206,7 @@ void ADTModelTestActor::GenerateShowStaticMesh()
 		m_ArrayComponent.Add(StaticMeshComponent);
 		StaticMeshComponent->SetupAttachment(RootComponent);
 		StaticMeshComponent->RegisterComponent();
-		ComponentAddsCollisionChannel(StaticMeshComponent);
+		UDTTools::ComponentAddsCollisionChannel(StaticMeshComponent);
 		
 		// 新建对象
 		UStaticMesh * BuildStaticMesh = NewObject<UStaticMesh>(this);
@@ -351,7 +304,7 @@ void ADTModelTestActor::GenerateShowProceduralMesh(bool bUseAsyncCooking)
 		ProceduralMeshComponent->SetMaterial(0, m_Material);
 		ProceduralMeshComponent->bUseAsyncCooking = bUseAsyncCooking;
 		// ProceduralMeshComponent->SetCastShadow(false);
-		ComponentAddsCollisionChannel(ProceduralMeshComponent);
+		UDTTools::ComponentAddsCollisionChannel(ProceduralMeshComponent);
 		ProceduralMeshComponent->CreateMeshSection(0, g_ArrayPoints, g_ArrayTriangles, g_ArrayNormals, g_ArrayUVs, {}, {}, true);
 	}
 
@@ -376,7 +329,7 @@ void ADTModelTestActor::GenerateShowDynamicMesh(bool bUseAsyncCooking)
 		DynamicMeshComponent->SetupAttachment(RootComponent);
 		DynamicMeshComponent->RegisterComponent();
 		DynamicMeshComponent->SetMaterial(0, m_Material);
-		ComponentAddsCollisionChannel(DynamicMeshComponent);
+		UDTTools::ComponentAddsCollisionChannel(DynamicMeshComponent);
 		DynamicMeshComponent->bUseAsyncCooking = bUseAsyncCooking;
 
 		
@@ -444,7 +397,7 @@ void ADTModelTestActor::GenerateShowDTModel()
 		DTMeshComponent->RegisterComponent();
 		DTMeshComponent->SetMaterial(0, m_Material);
 		//DTMeshComponent->bUseAsyncCooking = bUseAsyncCooking;
-		ComponentAddsCollisionChannel(DTMeshComponent);
+		UDTTools::ComponentAddsCollisionChannel(DTMeshComponent);
 		DTMeshComponent->AddMeshSection(g_ArrayPoints, g_ArrayTriangles, g_ArrayNormals, g_ArrayUVs);
 
 	}
@@ -471,7 +424,7 @@ void ADTModelTestActor::GenerateShowRealtimeMesh()
 		RealtimeMeshComponent->SetupAttachment(RootComponent);
 		RealtimeMeshComponent->RegisterComponent();
 		RealtimeMeshComponent->SetMaterial(0, m_Material);
-		ComponentAddsCollisionChannel(RealtimeMeshComponent);
+		UDTTools::ComponentAddsCollisionChannel(RealtimeMeshComponent);
 
 		URealtimeMeshSimple* RealtimeMesh = RealtimeMeshComponent->InitializeRealtimeMesh<URealtimeMeshSimple>();
 		FRealtimeMeshStreamSet StreamSet;
@@ -506,6 +459,33 @@ void ADTModelTestActor::GenerateShowRealtimeMesh()
 	m_ElapseTime = 0;
 	m_GenerateTime = ThisTime;
 	UE_LOG(LogTemp, Log, TEXT("Stats::Broadcast GenerateShowRealtimeMesh %.2f"), ThisTime);
+}
+
+// 生成并显示 DTTerrainComponent
+void ADTModelTestActor::GenerateShowTerrainComponent()
+{
+	// 释放之前所有组件
+	ReleaseComponent();
+
+	double ThisTime = 0;
+	{
+		SCOPE_SECONDS_COUNTER(ThisTime);
+
+		// 生成并显示
+		m_ShowType = TEXT("DTTC");
+		UDTTerrainComponent* DTTerrainComponent = NewObject<UDTTerrainComponent>(this, UDTTerrainComponent::StaticClass(), TEXT("DTTerrainComponent"));
+		m_ArrayComponent.Add(DTTerrainComponent);
+		DTTerrainComponent->SetupAttachment(RootComponent);
+		DTTerrainComponent->RegisterComponent();
+		//DTTerrainComponent->SetMaterial(0, m_Material);
+		//DTMeshComponent->bUseAsyncCooking = bUseAsyncCooking;
+		//UDTTools::ComponentAddsCollisionChannel(DTTerrainComponent);
+		DTTerrainComponent->GenerateTerrain();
+	}
+
+	m_ElapseTime = 0;
+	m_GenerateTime = ThisTime;
+	UE_LOG(LogTemp, Log, TEXT("Stats::Broadcast GenerateShowTerrainComponent %.2f"), ThisTime);
 }
 
 void ADTModelTestActor::BeforeHitTest()

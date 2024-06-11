@@ -8,8 +8,6 @@
 #include "DynamicMeshBuilder.h"
 #include "MaterialDomain.h"
 #include "Components/MeshComponent.h"
-#include "PhysicsEngine/ConvexElem.h"
-#include "PhysicsProxy/StaticMeshPhysicsProxy.h"
 #include "DTMeshComponent.generated.h"
 
 class UDTMeshComponent;
@@ -35,8 +33,7 @@ class FDTMeshSceneProxy final : public FPrimitiveSceneProxy
 public:
 	TArray<FDTMeshSectionGPU*>						m_MeshSections;					// 模型分块缓冲
 	FMaterialRelevance								m_MaterialRelevance;			// 材质属性
-	UBodySetup*										m_BodySetup;					// 碰撞体
-	
+
 public:
 	// 构造函数
 	FDTMeshSceneProxy(UDTMeshComponent * DTMeshComponent);
