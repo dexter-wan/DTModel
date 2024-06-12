@@ -13,11 +13,6 @@
 
 UE_DISABLE_OPTIMIZATION_SHIP
 
-DECLARE_STATS_GROUP(TEXT("DT Model"), STATGROUP_DTModel, STATCAT_Test);
-DECLARE_CYCLE_STAT(TEXT("Proxy Dynamic Mesh"), STAT_Proxy_Dynamic, STATGROUP_DTModel); 
-DECLARE_CYCLE_STAT(TEXT("Proxy Static Mesh"), STAT_Proxy_Static, STATGROUP_DTModel);
-DECLARE_CYCLE_STAT(TEXT("Component Tick"), STAT_Component_Tick, STATGROUP_DTModel);
-
 // --------------------------------------------------------------------------
 // 模型代理 构造函数
 FDTMeshSceneProxy::FDTMeshSceneProxy(UDTMeshComponent* DTMeshComponent)
@@ -165,41 +160,21 @@ void FDTMeshSceneProxy::GetDynamicMeshElements(const TArray<const FSceneView*>& 
 	}
 }
 
-// 命中代理
-HHitProxy* FDTMeshSceneProxy::CreateHitProxies(UPrimitiveComponent* PrimitiveComponent, TArray<TRefCountPtr<HHitProxy>>& OutHitProxies)
-{
-	return FPrimitiveSceneProxy::CreateHitProxies(PrimitiveComponent, OutHitProxies);
-}
-
 // --------------------------------------------------------------------------
 // 模型组件 构造函数
 UDTMeshComponent::UDTMeshComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, m_MeshSceneProxy( nullptr )
 	, m_LocalBounds( ForceInitToZero )
-
 {
-	// 设置初始化变量
-	PrimaryComponentTick.bCanEverTick = true;
-
-	
 }
-
 
 // 开始播放
 void UDTMeshComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	
 }
 
-// 每帧回调
-void UDTMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	SCOPE_CYCLE_COUNTER(STAT_Component_Tick);
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
 
 // 返回场景代理
 FPrimitiveSceneProxy* UDTMeshComponent::CreateSceneProxy()
@@ -225,7 +200,10 @@ UBodySetup* UDTMeshComponent::GetBodySetup()
 // 返回场景大小
 FBoxSphereBounds UDTMeshComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
-	return m_LocalBounds.TransformBy(LocalToWorld);
+	FBoxSphereBounds Ret(m_LocalBounds.TransformBy(LocalToWorld));
+	Ret.BoxExtent *= BoundsScale;
+	Ret.SphereRadius *= BoundsScale;
+	return Ret;
 }
 
 // 返回材质数量
@@ -304,6 +282,29 @@ bool UDTMeshComponent::ContainsPhysicsTriMeshData(bool InUseAllTriData) const
 	return !!m_MeshSections.Num();
 }
 
+// 获取BOX
+FBox UDTMeshComponent::GetBox(const TArray<FDynamicMeshVertex>& Vertices) const
+{
+	FBox Box(EForceInit::ForceInit);
+	for ( const FDynamicMeshVertex & Vertex : Vertices )
+	{
+		Box += FVector( Vertex.Position.X, Vertex.Position.Y, Vertex.Position.Z );
+	}
+	return Box;
+}
+
+// 更新本地区域
+void UDTMeshComponent::UpdateLocalBounds()
+{
+	FBox LocalBox(ForceInit);
+	for (FDTMeshSectionCPU & MeshSection : m_MeshSections)
+	{
+		LocalBox += MeshSection.LocalBox;
+	}
+	m_LocalBounds = LocalBox.IsValid ? FBoxSphereBounds(LocalBox) : FBoxSphereBounds(FVector::ZeroVector, FVector::ZeroVector, 0);
+	UpdateBounds();
+}
+
 // 更新碰撞体
 void UDTMeshComponent::UpdateBodySetup()
 {
@@ -344,8 +345,10 @@ int UDTMeshComponent::AddMeshSection(const TArray<FVector>& Vertices, const TArr
 			MeshSectionCPU.Triangles.Add(Triangle);
 		}
 	}
+	MeshSectionCPU.LocalBox = FBox(Vertices);
 	
-	m_LocalBounds = FBoxSphereBounds(Vertices.GetData(), Vertices.Num());
+	// 更新本地盒子
+	UpdateLocalBounds();
 
 	// 创建碰撞体
 	UpdateBodySetup();
@@ -413,6 +416,15 @@ bool UDTMeshComponent::UpdateVertexPosition(uint32 SectionIndex, uint32 VertexIn
 			RHICmdList.UnlockBuffer(VertexBufferRHI);
 		}
 	});
+
+	// 更新盒子
+	MeshSectionCPU.LocalBox = GetBox(MeshSectionCPU.Vertices);
+	
+	// 更新本地盒子
+	UpdateLocalBounds();
+
+	// 更新碰撞体
+	UpdateBodySetup();
 	
 	return true;
 }
@@ -475,6 +487,12 @@ bool UDTMeshComponent::OffsetVertexPosition(uint32 SectionIndex, uint32 VertexIn
 			RHICmdList.UnlockBuffer(VertexBufferRHI);
 		}
 	});
+
+	// 更新盒子
+	MeshSectionCPU.LocalBox = GetBox(MeshSectionCPU.Vertices);
+	
+	// 更新本地盒子
+	UpdateLocalBounds();
 	
 	// 更新碰撞体
 	UpdateBodySetup();

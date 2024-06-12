@@ -1,6 +1,4 @@
-﻿// Copyright 2024 Dexter.Wan. All Rights Reserved. 
-// EMail: 45141961@qq.com
-// Website: https://dt.cq.cn
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -8,37 +6,36 @@
 #include "DynamicMeshBuilder.h"
 #include "MaterialDomain.h"
 #include "Components/MeshComponent.h"
-#include "DTMeshComponent.generated.h"
+#include "DTHMeshComponent.generated.h"
 
-class UDTMeshComponent;
+class UDTHMeshComponent;
 
-// GUP保存的模型数据
-struct FDTMeshSectionGPU
+// CPU保存的模型数据
+struct FDTHMeshData
 {
-	UMaterialInterface *							MaterialInterface;			// 材质接口
-	FStaticMeshVertexBuffers						VertexBuffers;				// GPU顶点缓存
-	FLocalVertexFactory								VertexFactory;				// GPU顶点代理
-	FDynamicMeshIndexBuffer32						IndexBuffer;				// 索引缓存
-
-	FDTMeshSectionGPU(UMaterialInterface * InMaterialInterface, ERHIFeatureLevel::Type InFeatureLevel)
-	: MaterialInterface(InMaterialInterface ? InMaterialInterface : UMaterial::GetDefaultMaterial(MD_Surface))
-	, VertexFactory(InFeatureLevel, "FDTMeshSectionGPU")
-	{}
+	FStaticMeshVertexBuffer							StaticMeshVertexBuffer;
+	FPositionVertexBuffer							PositionVertexBuffer;
+	FColorVertexBuffer								ColorVertexBuffer;
+	FDynamicMeshIndexBuffer32						IndexBuffer;
 };
 
+
 // 场景代理体
-class FDTMeshSceneProxy final : public FPrimitiveSceneProxy
+class FDTHMeshSceneProxy final : public FPrimitiveSceneProxy
 {
 
 public:
-	TArray<FDTMeshSectionGPU*>						m_MeshSections;					// 模型分块缓冲
+	const bool										m_bHaveMesh;					// 有模型
+	FDTHMeshData&									m_MeshData;						// 模型分块缓冲
+	UMaterialInterface *							m_MaterialInterface;			// 材质接口
+	FLocalVertexFactory								m_VertexFactory;				// 顶点工厂
 	FMaterialRelevance								m_MaterialRelevance;			// 材质属性
 
 public:
 	// 构造函数
-	FDTMeshSceneProxy(UDTMeshComponent * DTMeshComponent);
+	FDTHMeshSceneProxy(UDTHMeshComponent * DTMeshComponent);
 	// 析构函数
-	virtual ~FDTMeshSceneProxy() override;
+	virtual ~FDTHMeshSceneProxy() override;
 
 	// 继承函数
 protected:
@@ -56,32 +53,25 @@ protected:
 #else
 	virtual void CreateRenderThreadResources() override;
 #endif
+	// 绘画线程销毁
+	virtual void DestroyRenderThreadResources() override;
 	// 绘画动态元素
 	virtual void GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const override;
 };
 
-// CPU保存的模型数据
-struct FDTMeshSectionCPU
-{
-	FBox											LocalBox;				// 本地盒子
-	TArray<FDynamicMeshVertex>						Vertices;				// 点位置数据
-	TArray<FUintVector>								Triangles;				// 三角形索引
-};
 
-// 自定义模式实验
+// 快速渲染组件
 UCLASS(ClassGroup=(DT), meta=(BlueprintSpawnableComponent))
-class DTMODEL_API UDTMeshComponent : public UMeshComponent, public IInterface_CollisionDataProvider
+class DTMODEL_API UDTHMeshComponent : public UMeshComponent, public IInterface_CollisionDataProvider
 {
 	GENERATED_BODY()
-	
-	friend class FDTMeshSceneProxy;
-	
+
 private:
 	// 模型数据
-	TArray<FDTMeshSectionCPU>						m_MeshSections;
+	FDTHMeshData									m_MeshData;			
 
 	// 场景代理
-	FDTMeshSceneProxy *								m_MeshSceneProxy;
+	FDTHMeshSceneProxy *							m_MeshSceneProxy;
 	
 	// 本地局部边界
 	UPROPERTY(Transient)
@@ -90,15 +80,17 @@ private:
 	// 碰撞体
 	UPROPERTY(Instanced)
 	TObjectPtr<class UBodySetup>					m_BodySetup;
-
+	
 public:
 	// 构造函数
-	UDTMeshComponent(const FObjectInitializer& ObjectInitializer);
+	UDTHMeshComponent(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	// 开始播放
 	virtual void BeginPlay() override;
-
+	// 每帧函数
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
 	// 组件继承回调
 public:
 	// 场景代理
@@ -122,30 +114,17 @@ public:
 	// 数据函数
 public:
 	// 获取数据
-	TArray<FDTMeshSectionCPU> & GetMeshSections() { return m_MeshSections; }
+	FDTHMeshData& GetMeshData() { return m_MeshData; }
 	// 获取场景代理
-	FDTMeshSceneProxy * GetSceneProxy() const { return m_MeshSceneProxy; }
-
+	FDTHMeshSceneProxy * GetSceneProxy() const { return m_MeshSceneProxy; }
+	
 	// 功能函数
-public:
-	// 获取BOX
-	FBox GetBox( const TArray<FDynamicMeshVertex> & Vertices ) const;
-	// 更新本地区域
-	void UpdateLocalBounds();
+protected:
 	// 更新碰撞体
 	void UpdateBodySetup();
-	
-public:
-	// 创建模型
-	int AddMeshSection(const TArray<FVector>& Vertices, const TArray<int32>& Triangles, const TArray<FVector>& Normals, const TArray<FVector2D>& UVs);
-	// 更新点
-	bool UpdateVertexPosition( uint32 SectionIndex, uint32 VertexIndex, const FVector & UpdatePosition );
-	// 偏移点
-	bool OffsetVertexPosition( uint32 SectionIndex, uint32 VertexIndex, const FVector & OffsetPosition );
 
-	UFUNCTION(BlueprintCallable)
-	void BeforeHitTest();
-	
-	UFUNCTION(BlueprintCallable)
-	void AfterHitTest( const FHitResult& Hit ); 
+public:
+	// 添加模型
+	void SetMesh(const TArray<FVector>& Vertices, const TArray<int32>& Triangles, const TArray<FVector>& Normals, const TArray<FVector2D>& UVs);
 };
+
