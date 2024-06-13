@@ -21,6 +21,7 @@ class DTMODEL_API UDTTerrainComponent : public USceneComponent
 {
 	GENERATED_BODY()
 	
+	UPROPERTY() TMap<FInt64Vector2, double>			m_MapElevation;
 	UPROPERTY() TMap<FInt64Vector2, FDTMeshLOD>		m_MapMesh;
 	
 public:

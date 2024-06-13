@@ -17,14 +17,18 @@ if ( FPaths::FileExists(F) )														\
 	FFileHelper::LoadFileToArray(Result, *F);										\
 	V.Append( (T*)Result.GetData(), Result.Num() / sizeof(T) );						\
 }
-static constexpr int64 TerrainSize = 20 * 1000 * 100;
-static constexpr int64 TerrainLODIntervalMin = 5 * 100;
-static constexpr int64 TerrainLODInterval1 = TerrainLODIntervalMin;
-static constexpr int64 TerrainLODInterval2 = 20 * 100;
-static constexpr int64 TerrainLODIntervalMax = 200 * 100;
-static constexpr int64 TerrainInterval = 1000 * 100;
-static constexpr int64 TerrainLODDistance1 = TerrainInterval * 2;
-static constexpr int64 TerrainLODDistance2 = TerrainInterval * 5;
+static constexpr int64 TerrainInterval = 1000 * 100;								// 地形单片距离
+static constexpr int64 TerrainSize = 20 * TerrainInterval;							// 地图单边大小
+static constexpr int64 TerrainSizeBeginX = -TerrainSize;							// 地形起点 X
+static constexpr int64 TerrainSizeBeginY = -TerrainSize;							// 地形起点 Y
+static constexpr int64 TerrainSizeEndX = TerrainSize;								// 地形结束点 X
+static constexpr int64 TerrainSizeEndY = TerrainSize;								// 地形结束点 Y
+static constexpr int64 TerrainLODIntervalMin = 5 * 100;								// LOD 的最小间隔
+static constexpr int64 TerrainLODInterval1 = TerrainLODIntervalMin;					// LOD 1层间隔
+static constexpr int64 TerrainLODInterval2 = 20 * 100;								// LOD 2层间隔
+static constexpr int64 TerrainLODIntervalMax = 200 * 100;							// LOD 最大间隔
+static constexpr int64 TerrainLODDistance1 = TerrainInterval * 2;					// 地形LOD 1层距离
+static constexpr int64 TerrainLODDistance2 = TerrainInterval * 5;					// 地形LOD 2层距离	
 
 UE_DISABLE_OPTIMIZATION_SHIP
 
@@ -84,10 +88,14 @@ void UDTTerrainComponent::DestroyMeshComponent(UMeshComponent*& MeshLOD)
 void UDTTerrainComponent::GenerateTerrain()
 {
 	TArray<FVector2D> ArrayVector2D;
-	for ( int64 X = -TerrainSize; X < TerrainSize; X += TerrainInterval )
+	for ( int64 X = TerrainSizeBeginX; X < TerrainSizeEndX; X += TerrainInterval )
 	{
-		for ( int64 Y = -TerrainSize; Y < TerrainSize; Y += TerrainInterval )
+		for ( int64 Y = TerrainSizeBeginY; Y < TerrainSizeEndY; Y += TerrainInterval )
 		{
+			GenerateArea(X, Y, TerrainInterval, TerrainLODInterval1, nullptr);
+			GenerateArea(X, Y, TerrainInterval, TerrainLODInterval2, nullptr);
+			GenerateArea(X, Y, TerrainInterval, TerrainLODIntervalMax, nullptr);
+
 			FDTMeshLOD DTMeshLOD;
 			DTMeshLOD.MeshLOD1 = nullptr;
 			DTMeshLOD.MeshLOD2 = nullptr;
@@ -183,7 +191,21 @@ void UDTTerrainComponent::GenerateArea(int64 BeginX, int64 BeginY, int64 Length,
 		// 生成模型数据
 		for ( const FVector2D & Vector2D : ArrayVector2D )
 		{
-			ArrayPoints.Add(FVector(Vector2D.X, Vector2D.Y, 0));
+			double Elevation = 0.0;
+			FInt64Vector2 PointKey(Vector2D.X, Vector2D.Y);
+			if ( double * pFindElevation = m_MapElevation.Find(PointKey) )
+			{
+				Elevation = *pFindElevation;
+			}
+			else
+			{
+				Elevation = FMath::RandHelper(5000);
+				m_MapElevation.Add(PointKey, Elevation);
+			}
+			ArrayPoints.Add(FVector(Vector2D.X, Vector2D.Y, Elevation));
+
+			const FVector2D UV((Vector2D.X - static_cast<double>(TerrainSizeBeginX)) / static_cast<double>(TerrainSizeEndX - TerrainSizeBeginX),
+								(Vector2D.Y - static_cast<double>(TerrainSizeBeginX)) / static_cast<double>(TerrainSizeEndY - TerrainSizeBeginY));
 			ArrayUVs.Add( FVector2D((Vector2D.X - static_cast<double>(BeginX)) / static_cast<double>(Length),
 										(Vector2D.Y - static_cast<double>(BeginX)) / static_cast<double>(Length)) );
 		}
@@ -207,8 +229,11 @@ void UDTTerrainComponent::GenerateArea(int64 BeginX, int64 BeginY, int64 Length,
 		FFileHelper::SaveArrayToFile(TArray64<uint8>((uint8*)ArrayTriangles.GetData(), ArrayTriangles.Num() * ArrayTriangles.GetTypeSize()), *FileTriangles);
 		FFileHelper::SaveArrayToFile(TArray64<uint8>((uint8*)ArrayUVs.GetData(), ArrayUVs.Num() * ArrayUVs.GetTypeSize()), *FileUVs);
 	}
-	
-	Function(ArrayPoints, ArrayNormals, ArrayTriangles, ArrayUVs);
+
+	if ( Function != nullptr )
+	{
+		Function(ArrayPoints, ArrayNormals, ArrayTriangles, ArrayUVs);
+	}
 }
 
 
