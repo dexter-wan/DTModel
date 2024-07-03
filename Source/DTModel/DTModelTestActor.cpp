@@ -488,6 +488,10 @@ void ADTModelTestActor::GenerateShowTerrainComponent()
 	UE_LOG(LogTemp, Log, TEXT("Stats::Broadcast GenerateShowTerrainComponent %.2f"), ThisTime);
 }
 
+void ADTModelTestActor::GenerateDelaunayTest()
+{
+}
+
 void ADTModelTestActor::BeforeHitTest()
 {
 	for ( USceneComponent * SceneComponent : m_ArrayComponent )

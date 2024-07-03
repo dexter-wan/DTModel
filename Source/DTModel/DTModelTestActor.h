@@ -61,6 +61,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void GenerateShowTerrainComponent();
 
+	// 生成并显示 Delaunay 测试
+	UFUNCTION(BlueprintCallable)
+	void GenerateDelaunayTest();
+
 	UFUNCTION(BlueprintCallable)
 	void BeforeHitTest();
 	
