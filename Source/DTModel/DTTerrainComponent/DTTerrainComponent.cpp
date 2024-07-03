@@ -36,6 +36,10 @@ UE_DISABLE_OPTIMIZATION_SHIP
 UDTTerrainComponent::UDTTerrainComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+
+	// 加载材质
+	static ConstructorHelpers::FObjectFinder<UMaterial> MeshMaterial(TEXT("/Script/Engine.Material'/Game/Material.Material'"));
+	if (MeshMaterial.Succeeded()) { m_Material = MeshMaterial.Object; }
 }
 
 // 开始播放
@@ -111,6 +115,7 @@ UMeshComponent* UDTTerrainComponent::GenerateArea(int64 BeginX, int64 BeginY, in
 	UDTHMeshComponent* HMeshComponent = NewObject<UDTHMeshComponent>(this, UDTHMeshComponent::StaticClass(), *FString::Printf(TEXT("PMC_%I64d_%I64d_%I64d_%I64d"), BeginX, BeginY, Length, Interval));
 	HMeshComponent->SetupAttachment(this);
 	HMeshComponent->RegisterComponent();
+	HMeshComponent->SetMaterial(0, m_Material);
 	UDTTools::ComponentAddsCollisionChannel(HMeshComponent);
 
 	GenerateArea(BeginX, BeginY, Length, Interval,
@@ -206,8 +211,7 @@ void UDTTerrainComponent::GenerateArea(int64 BeginX, int64 BeginY, int64 Length,
 
 			const FVector2D UV((Vector2D.X - static_cast<double>(TerrainSizeBeginX)) / static_cast<double>(TerrainSizeEndX - TerrainSizeBeginX),
 								(Vector2D.Y - static_cast<double>(TerrainSizeBeginX)) / static_cast<double>(TerrainSizeEndY - TerrainSizeBeginY));
-			ArrayUVs.Add( FVector2D((Vector2D.X - static_cast<double>(BeginX)) / static_cast<double>(Length),
-										(Vector2D.Y - static_cast<double>(BeginX)) / static_cast<double>(Length)) );
+			ArrayUVs.Add( UV );
 		}
 		for ( const UE::Geometry::FIndex3i & Index3i : ArrayIndex )
 		{

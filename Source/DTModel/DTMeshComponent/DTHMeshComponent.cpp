@@ -14,7 +14,7 @@ FDTHMeshSceneProxy::FDTHMeshSceneProxy(UDTHMeshComponent* DTMeshComponent)
 	: FPrimitiveSceneProxy(DTMeshComponent)
 	, m_bHaveMesh(DTMeshComponent->GetMeshData().StaticMeshVertexBuffer.GetNumVertices() != 0)
 	, m_MeshData(DTMeshComponent->GetMeshData())
-	, m_MaterialInterface(UMaterial::GetDefaultMaterial(MD_Surface))
+	, m_MaterialInterface(DTMeshComponent->GetMaterial(0) ? DTMeshComponent->GetMaterial(0) : UMaterial::GetDefaultMaterial(MD_Surface))
 	, m_VertexFactory(GetScene().GetFeatureLevel(), "DTHMeshSceneProxy")
 	, m_MaterialRelevance(DTMeshComponent->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 {
