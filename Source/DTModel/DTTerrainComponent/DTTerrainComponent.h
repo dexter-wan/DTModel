@@ -5,7 +5,10 @@
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
 #include "Components/MeshComponent.h"
+#include "FastNoiseWrapper.h"
 #include "DTTerrainComponent.generated.h"
+
+class UFastNoiseWrapper;
 
 USTRUCT()
 struct FDTMeshLOD
@@ -25,6 +28,7 @@ public:
 	UPROPERTY()	UMaterial *													m_Material;
 	UPROPERTY() TMap<FInt64Vector2, double>									m_MapElevation;
 	UPROPERTY() TMap<FInt64Vector2, FDTMeshLOD>								m_MapMesh;
+	UPROPERTY() UFastNoiseWrapper *											m_FastNoiseWrapper;
 	
 public:
 	// 构造函数

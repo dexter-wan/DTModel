@@ -18,7 +18,8 @@ if ( FPaths::FileExists(F) )														\
 	V.Append( (T*)Result.GetData(), Result.Num() / sizeof(T) );						\
 }
 static constexpr int64 TerrainInterval = 1000 * 100;								// 地形单片距离
-static constexpr int64 TerrainSize = 20 * TerrainInterval;							// 地图单边大小
+static constexpr int64 TerrainSize = 5 * TerrainInterval;							// 地图单边大小
+//static constexpr int64 TerrainSize = 20 * TerrainInterval;							// 地图单边大小
 static constexpr int64 TerrainSizeBeginX = -TerrainSize;							// 地形起点 X
 static constexpr int64 TerrainSizeBeginY = -TerrainSize;							// 地形起点 Y
 static constexpr int64 TerrainSizeEndX = TerrainSize;								// 地形结束点 X
@@ -36,6 +37,7 @@ UE_DISABLE_OPTIMIZATION_SHIP
 UDTTerrainComponent::UDTTerrainComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	m_FastNoiseWrapper = CreateDefaultSubobject<UFastNoiseWrapper>(TEXT("FastNoiseWrapper"));
 
 	// 加载材质
 	static ConstructorHelpers::FObjectFinder<UMaterial> MeshMaterial(TEXT("/Script/Engine.Material'/Game/Material.Material'"));
@@ -46,6 +48,8 @@ UDTTerrainComponent::UDTTerrainComponent()
 void UDTTerrainComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	m_FastNoiseWrapper->SetupFastNoise();
 }
 
 // 每帧函数
@@ -204,7 +208,8 @@ void UDTTerrainComponent::GenerateArea(int64 BeginX, int64 BeginY, int64 Length,
 			}
 			else
 			{
-				Elevation = FMath::RandHelper(5000);
+				// Elevation = FMath::RandHelper(5000);
+				Elevation = m_FastNoiseWrapper->GetNoise2D(PointKey.X, PointKey.Y) * 500.0;
 				m_MapElevation.Add(PointKey, Elevation);
 			}
 			ArrayPoints.Add(FVector(Vector2D.X, Vector2D.Y, Elevation));

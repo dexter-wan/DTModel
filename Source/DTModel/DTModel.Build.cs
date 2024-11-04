@@ -30,7 +30,9 @@ public class DTModel : ModuleRules
 			"RenderCore",
 			"RealtimeMeshComponent",
 			"PhysicsCore",
-			"Chaos"
+			"Chaos",
+			"FastNoiseGenerator",
+			"FastNoise"
 		});
 	}
 }
